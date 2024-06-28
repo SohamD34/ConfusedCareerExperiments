@@ -61,7 +61,7 @@ def start_session(session_id):
     return {'status': True, 'message': "Session started successfully"}
 
 
-async def get_response(stream_self, question, session_id):
+def get_response(stream_self, question, session_id):
     if session_id in Chatbot.sessions:
 
         # await stream_self.asend(StreamingStartMessage())
@@ -71,7 +71,7 @@ async def get_response(stream_self, question, session_id):
         with client.beta.threads.runs.stream(thread_id=thread_id, assistant_id=ASSISTANT_ID, event_handler=EventHandler(), temperature=0) as stream:
             stream.until_done()
 
-        await stream_self.asend(StreamingEndMessage())
+        # await stream_self.asend(StreamingEndMessage())
 
         return {'status': True, 'response': "Response received"}
     else:
@@ -90,10 +90,10 @@ def end_session(session_id):
 
 if __name__ == "__main__":
     start_session("1")
-    get_response("1", "Should I go for a PhD or get a job?")
+    get_response("1", "Should I go for a PhD or get a job?", "1")
 
     time.sleep(5)
 
-    get_response("1", "I have interest in AI and my long term goal is to a senior researcher in a good firm")
+    get_response("1", "I have interest in AI and my long term goal is to a senior researcher in a good firm", "1")
 
     end_session("1")
