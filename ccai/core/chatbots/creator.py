@@ -42,8 +42,10 @@ class Chatbot:
         run = self.poll_run(run)
 
         messages = self.client.beta.threads.messages.list(thread_id=self.thread_id, order="desc", limit=1)
-
-        answer = messages.content[0].text.value
+        
+        for m in messages:
+            answer = m.content[0].text.value
+            break
 
         return answer
 
@@ -89,8 +91,8 @@ if __name__ == "__main__":
     import asyncio
 
     async def test():
-        print(await start_session("test", "thread_ZS00jCstrsOiFaOR67dLNd8U"))
-        await get_response("test", "Hello. Give me some information on career in AI.")
+        print(await start_session("test", null))
+        print(await get_response("test", "Hello. Give me some information on career in AI."))
         print(await end_session("test"))
 
     asyncio.run(test())
