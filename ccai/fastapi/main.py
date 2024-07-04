@@ -17,3 +17,12 @@ def root():
         "success": True,
         "message": "Welcome to ConfusedCareers!",
     }
+
+
+@app.post("/", tags=["Root"])
+def root():
+    """Root endpoint"""
+    return {
+        "success": True,
+        "message": "Welcome to ConfusedCareers!",
+    }
