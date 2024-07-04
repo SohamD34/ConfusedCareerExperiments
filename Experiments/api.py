@@ -1,10 +1,8 @@
 from fastapi import FastAPI
 import uvicorn
 from bot import start_session, get_response, end_session
-
 import asyncio
 from sse_starlette.sse import EventSourceResponse
-
 from stream import Stream
 
 

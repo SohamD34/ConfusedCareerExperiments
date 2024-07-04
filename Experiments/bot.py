@@ -2,7 +2,6 @@ from openai import OpenAI
 from typing_extensions import override
 from openai import AssistantEventHandler
 import time
-
 from stream_model import BaseStreamingMessage, StreamingStartMessage, StreamingTokenMessage, StreamingEndMessage
 
 client = OpenAI(api_key="sk-proj-6H9PJPDIdLrtAtoeCfVRT3BlbkFJiZ3V2AX9cWseafKMvoPj")
