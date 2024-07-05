@@ -1,4 +1,5 @@
 from openai import OpenAI
+from pinecone import Pinecone
 import time
 
 
@@ -10,6 +11,11 @@ class Chatbot:
         self.assistant_id = "asst_U2GM4YYl0atq60GfLRNxIZvr"
         self.creator_id = creator_id
         self.thread_id = None
+
+        self.pc = Pinecone(api_key="e147bfa7-e5f3-4fcf-ad1a-f25729052a4f")
+        self.index = self.pc.Index("confusedcareertest")
+
+        self.messages = []
 
         pass
 
@@ -41,18 +47,39 @@ class Chatbot:
         run = self.client.beta.threads.runs.create(thread_id=self.thread_id, assistant_id=self.assistant_id)
         run = self.poll_run(run)
 
+        print(run.usage)
+
         messages = self.client.beta.threads.messages.list(thread_id=self.thread_id, order="desc", limit=1)
-        
+
         for m in messages:
             answer = m.content[0].text.value
             break
 
+        self.messages.append({"role": "user", "content": question})
+        self.messages.append({"role": "assistant", "content": answer})
+
         return answer
+    
+    async def upsert_messages(self):
+        inputs = []
+        values = []
+        for i in range(0, len(self.messages), 2):
+            question = self.messages[i]["content"]
+            answer = self.messages[i+1]["content"]
+
+            text = "Question: " + question + "\nAnswer: " + answer + "\n"
+            inputs.append(text)
+            values.append(self.client.embeddings.create(input=[text], model="text-embedding-3-small").data[0].embedding)
+
+        vectors = [{"id": str(i), "values": v, "metadata": {"text": inputs[i], "creator": self.creator_id}} for i, v in enumerate(values)]
+        self.index.upsert(vectors)
+
+        return self.index.describe_index_stats()
 
 
 async def start_session(creator_id, thread_id):
     if creator_id in Chatbot.sessions:
-        print("Session already started")
+        # print("Session already started")
         return {'status': False, 'message': "Session already started"}
 
     instance = Chatbot(creator_id)
@@ -67,10 +94,10 @@ async def start_session(creator_id, thread_id):
 
 
 async def get_response(creator_id, question):
-    print(Chatbot.sessions)
+    # print(Chatbot.sessions)
     if creator_id in Chatbot.sessions:
         response = await Chatbot.sessions[creator_id].run_chat(question)
-        print("Response received successfully")
+        # print("Response received successfully")
         return {'status': True, 'message': response}
 
     print("Failed to get response")
@@ -79,11 +106,14 @@ async def get_response(creator_id, question):
 
 async def end_session(creator_id):
     if creator_id in Chatbot.sessions:
-        del Chatbot.sessions[creator_id]
-        print("Session ended successfully")
-        return {'status': True, 'message': "Session ended successfully"}
+        instance = Chatbot.sessions[creator_id]
+        response = await instance.upsert_messages()
 
-    print("Failed to end session")
+        del Chatbot.sessions[creator_id]
+        # print("Session ended successfully")
+        return {'status': True, 'message': "Session ended successfully", 'response': response}
+
+    # print("Failed to end session")
     return {'status': False, 'message': 'Session not found'}
 
 
@@ -92,7 +122,10 @@ if __name__ == "__main__":
 
     async def test():
         print(await start_session("test", None))
-        print(await get_response("test", "Hello. Give me some information on career in AI."))
+        await get_response("test", "Hello. Give me some information on career in AI.")
+        await get_response("test", "I am thinking about pursuing a PhD")
+        # await get_response("test", "My end goal is to get a senior research scientist position in a top tech company. What should I do?")
+
         print(await end_session("test"))
 
     asyncio.run(test())
