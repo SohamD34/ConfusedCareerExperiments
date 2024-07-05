@@ -91,7 +91,7 @@ if __name__ == "__main__":
     import asyncio
 
     async def test():
-        print(await start_session("test", null))
+        print(await start_session("test", None))
         print(await get_response("test", "Hello. Give me some information on career in AI."))
         print(await end_session("test"))
 
