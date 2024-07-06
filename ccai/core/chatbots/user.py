@@ -1,5 +1,6 @@
 from openai import OpenAI
-import time
+from pinecone import Pinecone
+
 
 
 class Chatbot:
@@ -9,15 +10,30 @@ class Chatbot:
         self.client = OpenAI(api_key="sk-proj-6H9PJPDIdLrtAtoeCfVRT3BlbkFJiZ3V2AX9cWseafKMvoPj")
         self.creator_id = creator_id
         self.chat_id = chat_id
+
+        self.pc = Pinecone(api_key="e147bfa7-e5f3-4fcf-ad1a-f25729052a4f")
+        self.index = self.pc.Index("confusedcareertest")
+
         pass
 
 
     def load_bot(self):
         pass
 
+    def pinecone_search(self, question):
+        question_vec = self.client.embeddings.create(input=[question], model="text-embedding-3-small").data[0].embedding
+        results = self.index.query(namespace=self.creator_id, vector=question_vec, top_k=3, include_values=False, include_metadata=True)
+
+        context = []
+
+        for r in results.matches:
+            context.append(r.metadata['text'])
+
+        return context
 
     async def run_chat(self, question):
-        # print(question)
+        context = self.pinecone_search(question)
+
         completion = self.client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
@@ -65,7 +81,7 @@ if __name__ == "__main__":
     import asyncio
 
     async def test():
-        print(await start_session("1", "1"))
+        print(await start_session("1", "test"))
         print(await get_response("1", "Hello. Give me some information on career in AI."))
         print(await end_session("1"))
 
