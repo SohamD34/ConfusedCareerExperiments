@@ -71,8 +71,8 @@ class Chatbot:
             inputs.append(text)
             values.append(self.client.embeddings.create(input=[text], model="text-embedding-3-small").data[0].embedding)
 
-        vectors = [{"id": str(i), "values": v, "metadata": {"text": inputs[i], "creator": self.creator_id}} for i, v in enumerate(values)]
-        self.index.upsert(vectors)
+        vectors = [{"id": str(i), "values": v, "metadata": {"text": inputs[i]}} for i, v in enumerate(values)]
+        self.index.upsert(vectors, namespace=self.creator_id)
 
         return self.index.describe_index_stats()
 
