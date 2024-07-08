@@ -14,7 +14,6 @@ class Chatbot:
 
         self.pc = Pinecone(api_key="e147bfa7-e5f3-4fcf-ad1a-f25729052a4f")
         self.index = self.pc.Index("confusedcareertest")
-
         self.messages = []
 
         pass
@@ -74,12 +73,11 @@ class Chatbot:
         vectors = [{"id": str(i), "values": v, "metadata": {"text": inputs[i]}} for i, v in enumerate(values)]
         self.index.upsert(vectors, namespace=self.creator_id)
 
-        return self.index.describe_index_stats()
+        return self.index.describe_index_stats()        # returns vector count
 
 
 async def start_session(creator_id, thread_id):
     if creator_id in Chatbot.sessions:
-        # print("Session already started")
         return {'status': False, 'message': "Session already started"}
 
     instance = Chatbot(creator_id)
@@ -94,10 +92,8 @@ async def start_session(creator_id, thread_id):
 
 
 async def get_response(creator_id, question):
-    # print(Chatbot.sessions)
     if creator_id in Chatbot.sessions:
         response = await Chatbot.sessions[creator_id].run_chat(question)
-        # print("Response received successfully")
         return {'status': True, 'message': response}
 
     print("Failed to get response")
@@ -110,10 +106,8 @@ async def end_session(creator_id):
         response = await instance.upsert_messages()
 
         del Chatbot.sessions[creator_id]
-        # print("Session ended successfully")
         return {'status': True, 'message': "Session ended successfully", 'response': response}
 
-    # print("Failed to end session")
     return {'status': False, 'message': 'Session not found'}
 
 
@@ -122,9 +116,10 @@ if __name__ == "__main__":
 
     async def test():
         print(await start_session("test", None))
+
         await get_response("test", "Hello. Give me some information on career in AI.")
         await get_response("test", "I am thinking about pursuing a PhD")
-        # await get_response("test", "My end goal is to get a senior research scientist position in a top tech company. What should I do?")
+        await get_response("test", "My end goal is to get a senior research scientist position in a top tech company. What should I do?")
 
         print(await end_session("test"))
 
