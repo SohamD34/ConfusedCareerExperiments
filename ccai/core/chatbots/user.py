@@ -2,7 +2,6 @@ from openai import OpenAI
 from pinecone import Pinecone
 
 
-
 class Chatbot:
     user_sessions = {}
 
